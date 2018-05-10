@@ -19,7 +19,7 @@ var func = {
     var ownedSpawns = [];
     var ownedCreeps = {};
     var creepTiers = [[WORK,CARRY,MOVE,MOVE],
-                      [WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE]]
+                      [WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE]];
 
     // register owned rooms and spawns
     for(let room in Game.rooms) {
@@ -40,7 +40,8 @@ var func = {
           'harvesters' : 0,
           'builders' : 0,
           'upgraders' : 0,
-          'repairers' : 0
+          'repairers' : 0,
+          'haulers' : 0
         };
       }
 
@@ -59,6 +60,9 @@ var func = {
           }
           if(creep.memory.r == '3') {
             ownedCreeps[ownedRooms[room]]['repairers'] += 1;
+          }
+          if(creep.memory.r == '4') {
+            ownedCreeps[ownedRooms[room]]['haulers'] += 1;
           }
         }
       }
@@ -79,9 +83,13 @@ var func = {
               spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
                 "Upgrader" + Game.time.toString(),{memory: {r:2,o:room,s:0}});
             }
-            if (ownedCreeps[room]['repairers'] < 1) {
+            if (ownedCreeps[room]['repairers'] < 2) {
               spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
                 "Repairer" + Game.time.toString(),{memory: {r:3,o:room,s:0}});
+            }
+            if (ownedCreeps[room]['haulers'] < 1) {
+              spawns[spawn].spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,MOVE],
+                "Haulers" + Game.time.toString(),{memory: {r:4,o:room,s:0}});
             }
           }
         }
@@ -106,6 +114,9 @@ var func = {
       }
       if(creep.memory.r == '3') {
         roles.repairer(creep);
+      }
+      if(creep.memory.r == '4') {
+        roles.hauler(creep);
       }
     }
   },
