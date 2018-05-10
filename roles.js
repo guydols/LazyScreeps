@@ -33,12 +33,10 @@ var func = {
   builder: function(creep) {
     if(creep.memory.s && creep.carry.energy == 0) {
       creep.memory.s = false;
-      creep.say('🔄 harvest');
     }
 
     if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
       creep.memory.s = true;
-      creep.say('🚧 build');
     }
 
     if(creep.memory.s) {
@@ -63,11 +61,9 @@ var func = {
   upgrader: function(creep) {
     if(creep.memory.s && creep.carry.energy == 0) {
       creep.memory.s = false;
-      creep.say('🔄 harvest');
     }
     if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
       creep.memory.s = true;
-      creep.say('⚡ upgrade');
     }
     if(creep.memory.s) {
       if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
@@ -80,17 +76,15 @@ var func = {
       }
     }
   },
-  repairer: function(){
+  //**************
+  // repairer role
+  repairer: function(creep){
     if(creep.memory.s && creep.carry.energy == 0) {
       creep.memory.s = false;
-      creep.say('🔄 Harvest');
     }
-
     if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
       creep.memory.s = true;
-      creep.say('🚧 Repair');
     }
-
     if(creep.memory.s) {
       var targets = creep.room.find(FIND_STRUCTURES, {filter: function(structure) {
         if (structure.hits < structure.hitsMax){return structure;}}});

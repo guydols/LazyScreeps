@@ -2,9 +2,9 @@ var func = {
 
 
   //**************
-  // remove any dead registered creeps
-  cleanup: function(creeps) {
-    for (let name in creeps) {
+  // remove any dead creeps to save memory
+  cleanup: function() {
+    for (let name in Memory.creeps) {
       if (Game.creeps[name] == undefined) {
         delete Memory.creeps[name];
       }
@@ -18,6 +18,8 @@ var func = {
     var ownedRooms = [];
     var ownedSpawns = [];
     var ownedCreeps = {};
+    var creepTiers = [[WORK,CARRY,MOVE,MOVE],
+                      [WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE]]
 
     // register owned rooms and spawns
     for(let room in Game.rooms) {
@@ -42,6 +44,7 @@ var func = {
         };
       }
 
+      // count all the creeps per room
       for(let name in Game.creeps) {
         var creep = Game.creeps[name];
         if (creep.memory.o == ownedRooms[room]) {
@@ -61,32 +64,24 @@ var func = {
       }
 
       // var sources = room.find(FIND_SOURCES);
-      for (let room in ownedCreeps) {
-        if (ownedCreeps[room]['harvesters'] < 2) {
-          for (let spawn in spawns) {
-            if (spawns[spawn].spawning == null){
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],"Harvester" + Game.time.toString(),{memory: {r:0,o:room,s:0}});
+      for (let spawn in spawns) {
+        if (spawns[spawn].spawning == null){
+          for (let room in ownedCreeps) {
+            if (ownedCreeps[room]['harvesters'] < 2) {
+              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+                "Harvester" + Game.time.toString(),{memory: {r:0,o:room,s:0}});
             }
-          }
-        }
-        if (ownedCreeps[room]['builders'] < 2) {
-          for (let spawn in spawns) {
-            if (spawns[spawn].spawning == null){
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],"Builder" + Game.time.toString(),{memory: {r:1,o:room,s:0}});
+            if (ownedCreeps[room]['builders'] < 2) {
+              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+                "Builder" + Game.time.toString(),{memory: {r:1,o:room,s:0}});
             }
-          }
-        }
-        if (ownedCreeps[room]['upgraders'] < 2) {
-          for (let spawn in spawns) {
-            if (spawns[spawn].spawning == null){
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],"Upgrader" + Game.time.toString(),{memory: {r:2,o:room,s:0}});
+            if (ownedCreeps[room]['upgraders'] < 3) {
+              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+                "Upgrader" + Game.time.toString(),{memory: {r:2,o:room,s:0}});
             }
-          }
-        }
-        if (ownedCreeps[room]['repairers'] < 2) {
-          for (let spawn in spawns) {
-            if (spawns[spawn].spawning == null){
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],"Repairer" + Game.time.toString(),{memory: {r:3,o:room,s:0}});
+            if (ownedCreeps[room]['repairers'] < 1) {
+              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+                "Repairer" + Game.time.toString(),{memory: {r:3,o:room,s:0}});
             }
           }
         }
@@ -110,7 +105,7 @@ var func = {
         roles.upgrader(creep);
       }
       if(creep.memory.r == '3') {
-        roles.upgrader(creep);
+        roles.repairer(creep);
       }
     }
   },
