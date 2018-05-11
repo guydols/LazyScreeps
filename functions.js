@@ -18,7 +18,7 @@ var func = {
     var ownedRooms = [];
     var ownedSpawns = [];
     var ownedCreeps = {};
-    var population = [2,1,5,3,0];
+    var population = [2,0,6,2,0];
     var creepTiers = [[WORK,CARRY,MOVE,MOVE],
                       [WORK,WORK,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE]];
 
@@ -78,17 +78,17 @@ var func = {
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
             if (ownedCreeps[room]['builders'] <  population[1]) {
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+              spawns[spawn].spawnCreep(creepTiers[0],
                 "Builder" + Game.time.toString(),{memory: {r:1,o:room,s:0},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
             if (ownedCreeps[room]['upgraders'] <  population[2]) {
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+              spawns[spawn].spawnCreep(creepTiers[1],
                 "Upgrader" + Game.time.toString(),{memory: {r:2,o:room,s:0},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
             if (ownedCreeps[room]['repairers'] <  population[3]) {
-              spawns[spawn].spawnCreep([WORK,CARRY,MOVE,MOVE],
+              spawns[spawn].spawnCreep(creepTiers[0],
                 "Repairer" + Game.time.toString(),{memory: {r:3,o:room,s:0,t:false},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
@@ -140,6 +140,6 @@ var func = {
     }
   }
 
-  
+
 }
 module.exports = func;
