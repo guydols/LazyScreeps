@@ -2,7 +2,7 @@ var func = {
 
 
   //**************
-  // spawn screeps in rooms where they are lacking
+  // Execute the jobs for tower
   towerJobs: function(tower) {
     if(tower) {
       var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
