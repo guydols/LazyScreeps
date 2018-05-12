@@ -4,32 +4,40 @@ var func = {
   //**************
   // harvester role
   harvester: function(creep) {
-    // states
-    // s == 0 get energy
-    // s == 1 store energy
-    // s == 2 loiter *not implemented
-    // s == 9 init new creep
+  // states
+  // s == 0 get energy
+  // s == 1 store energy
+  // s == 2 loiter *not implemented
+  // s == 9 init new creep
+  switch(creep.memory.sta) {
 
-    // a new creep inits
-    if (creep.memory.s == 9) {
-      creep.memory.s = 0;
-    }
-    // check if energy is 0
-    if (creep.carry.energy == 0){
-      creep.memory.s = 0;
-    }
-    // get energy
-    if (creep.memory.s == 0) {
+    // state: s == 9
+    // init new creep
+    case 9:
+      creep.memory.sta = 0;
+      break;
+
+    // state: s == 0
+    // request and gather energy
+    case 0:
       var sources = creep.room.find(FIND_SOURCES);
-      if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+      if (sources[0].energy != 0){
+        if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
+      } else {
+        if(creep.harvest(sources[1]) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(sources[1], {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
       }
       if(creep.carry.energy == creep.carryCapacity){
-        creep.memory.s = 1;
+        creep.memory.sta = 1;
       }
-    }
-    // store energy carrying
-    if (creep.memory.s == 1){
+      break;
+
+    // state: s == 1
+    // store the energy carried by the creep
+    case 1:
       // extension and spawns have 1st priority
       var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
       return (structure.structureType == STRUCTURE_EXTENSION ||
@@ -42,6 +50,7 @@ var func = {
         return (structure.structureType == STRUCTURE_TOWER) &&
                 structure.energy < structure.energyCapacity;
         }});
+        targets.sort((x,y) => x.energy - y.energy);
       }
       if (targets.length == 0){
         // containers have 3nd priority
@@ -50,11 +59,17 @@ var func = {
           _.sum(structure.store) < structure.storeCapacity;
         }});
       }
+      // move to found target
       if(targets.length > 0) {
         if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
           creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
         }
       }
+      // check if carrying energy is empty
+      if (creep.carry.energy == 0) {
+        creep.memory.sta = 0;
+      }
+      break;
     }
   },
 
@@ -62,15 +77,24 @@ var func = {
   //**************
   // builder role
   builder: function(creep) {
-    if(creep.memory.s && creep.carry.energy == 0) {
-      creep.memory.s = false;
+    // states
+    // s == 0 get energy
+    // s == 1 find construction site
+    // s == 2 construct building
+    // s == 8 return unenergy
+    // s == 9 init new creep
+    switch(creep.memory.sta) {
+
+    }
+    if(creep.memory.sta && creep.carry.energy == 0) {
+      creep.memory.sta = false;
     }
 
-    if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
-      creep.memory.s = true;
+    if(!creep.memory.sta && creep.carry.energy == creep.carryCapacity) {
+      creep.memory.sta = true;
     }
 
-    if(creep.memory.s) {
+    if(creep.memory.sta) {
       var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
       if(targets.length) {
         if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
@@ -90,13 +114,13 @@ var func = {
   //**************
   // upgrader role
   upgrader: function(creep) {
-    if(creep.memory.s && creep.carry.energy == 0) {
-      creep.memory.s = false;
+    if(creep.memory.sta && creep.carry.energy == 0) {
+      creep.memory.sta = false;
     }
-    if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
-      creep.memory.s = true;
+    if(!creep.memory.sta && creep.carry.energy == creep.carryCapacity) {
+      creep.memory.sta = true;
     }
-    if(creep.memory.s) {
+    if(creep.memory.sta) {
       if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
         creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
       }
@@ -107,6 +131,8 @@ var func = {
       }
     }
   },
+
+
   //**************
   // repairer role
   repairer: function(creep){
@@ -119,111 +145,177 @@ var func = {
     // t != 9 target
 
     // a new creep inits
-    if (creep.memory.s == 9) {
-      creep.memory.s = 0;
+    if (creep.memory.sta == 9) {
+      creep.memory.sta = 0;
       creep.memory.t = 9;
     }
     // check if energy is 0
     if (creep.carry.energy == 0){
-      creep.memory.s = 0;
+      creep.memory.sta = 0;
       creep.memory.t = 9;
     }
     // get energy
-    if (creep.memory.s == 0) {
+    if (creep.memory.sta == 0) {
       var sources = creep.room.find(FIND_SOURCES);
       if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
         creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
       }
       if(creep.carry.energy == creep.carryCapacity){
-        creep.memory.s = 1;
+        creep.memory.sta = 1;
       }
     }
     // check if energy is not 0 and t is 9
-    if (creep.memory.s == 1 && creep.memory.t == 9){
+    if (creep.memory.sta == 1 && creep.memory.t == 9){
       var targets = creep.room.find(FIND_STRUCTURES, {filter: function(structure) {
         if (structure.hits < structure.hitsMax){return structure;}
       }});
       targets.sort((x,y) => (((x.hits-x.hitsMax)/x.hitsMax)*100) - (((y.hits-y.hitsMax)/y.hitsMax)*100));
       if(targets.length) {
         creep.memory.t = targets[0].id;
-        creep.memory.s = 2;
+        creep.memory.sta = 2;
       }
     }
     // check if energy is not 0 and t is not 9
-    if (creep.memory.s == 2 && creep.memory.t != 9){
+    if (creep.memory.sta == 2 && creep.memory.t != 9){
       var target = Game.getObjectById(creep.memory.t);
       // check if current target is fully healed
       if (target.hits == target.hitsMax) {
         creep.memory.t = 9;
-        creep.memory.s = 1;
+        creep.memory.sta = 1;
       }else {
         if(creep.repair(target) == ERR_NOT_IN_RANGE) {
           creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
         }
       }
     }
-
-
-
-
-    // if(creep.memory.s && creep.carry.energy == 0) {
-    //   creep.memory.s = false;
-    // }
-    // if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
-    //   creep.memory.s = true;
-    // }
-    // if(creep.memory.s) {
-    //   var targets = creep.room.find(FIND_STRUCTURES, {filter: function(structure) {
-    //   if (structure.hits < structure.hitsMax){return structure;}}});
-    //   targets.sort((x,y) => (((x.hits-x.hitsMax)/x.hitsMax)*100) - (((y.hits-y.hitsMax)/y.hitsMax)*100));
-    //   if(targets.length) {
-    //     if(creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
-    //       creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
-    //     }
-    //   }
-    // } else {
-    //   var sources = creep.room.find(FIND_SOURCES);
-    //   if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-    //     creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
-    //   }
-    // }
-
-
   },
+
+
   //**************
   // hauler role
   hauler: function(creep){
-    if(creep.memory.s && creep.carry.energy == 0) {
-      creep.memory.s = false;
-    }
+    // states
+    // s == 0 search for energy deficiency
+    // s == 1 find energy buffer
+    // s == 2 get energy from buffer
+    // s == 3 deliver energy to dst
+    // s == 4 return energy to storage
+    // s == 9 init new creep
+    // Memory
+    // rol: role
+    // ori: assigned room
+    // sta: state
+    // src: source of x
+    // dst: destination of x
+    creep.say(creep.memory.sta);
+    switch(creep.memory.sta) {
 
-    if(!creep.memory.s && creep.carry.energy == creep.carryCapacity) {
-      creep.memory.s = true;
-    }
+      // state: s == 9
+      // init new creep
+      case 9:
+        creep.memory.sta = 0;
+        break;
 
-    if(creep.memory.s) {
-      var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
-          return (structure.structureType == STRUCTURE_EXTENSION ||
-                  structure.structureType == STRUCTURE_SPAWN ||
-                  structure.structureType == STRUCTURE_TOWER) &&
-                  structure.esnergy < structure.energyCapacity;
+      // state: s == 0
+      // search energy for deficiency
+      case 0:
+        // extensions and spawns have 1st priority
+        var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        return (structure.structureType == STRUCTURE_EXTENSION ||
+                structure.structureType == STRUCTURE_SPAWN) &&
+                structure.energy < structure.energyCapacity;
+        }});
+        if (targets.length == 0){
+          // towers have 2nd priority
+          var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+          return (structure.structureType == STRUCTURE_TOWER) &&
+                  structure.energy < (structure.energyCapacity-creep.carryCapacity);
+          }});
         }
-      });
-
-        if(targets.length) {
-          if(creep.transfer(targets[0]) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+        // found a target, store in memory.dst and change state
+        if(targets.length > 0) {
+          creep.memory.dst = targets[0].id;
+          if (creep.carry.energy == 0) {
+            creep.memory.sta = 1;
+          } else {
+            creep.memory.sta = 3;
+          }
+        } else {
+          creep.memory.dst = 9;
+          if (creep.carry.energy == 0) {
+            creep.memory.sta = 0;
+          } else {
+            creep.memory.sta = 4;
           }
         }
-    } else {
-      var sources = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
-      return (structure.structureType == STRUCTURE_CONTAINER) &&
-              structure.store[RESOURCE_ENERGY] > 0;
-      }});
-      if(creep.withdraw(sources[0],RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
-      }
+        break;
+
+      // state: s == 1
+      // find buffer with energy
+      case 1:
+        var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        return (structure.structureType == STRUCTURE_CONTAINER) &&
+          (structure.store[RESOURCE_ENERGY] >= 200);
+        }});
+        if(targets.length > 0){
+          creep.memory.src = targets[0].id;
+          creep.memory.sta = 2;
+        } else {
+          creep.memory.sta = 0; // no energy in storage
+        }
+        break;
+
+      // state: s == 2
+      // get energy form buffer
+      case 2:
+        var target = Game.getObjectById(creep.memory.src);
+        if(creep.withdraw(target,RESOURCE_ENERGY,creep.carryCapacity) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
+        if (creep.carry.energy == creep.carryCapacity){
+          creep.memory.sta = 3;
+          creep.memory.src = 9;
+        }
+        break;
+
+      // state: s = 3
+      // deliver energy to destination
+      case 3:
+        if (creep.carry.energy != 0){
+          var target = Game.getObjectById(creep.memory.dst);
+
+          if (target.energy == target.energyCapacity){
+            creep.memory.dst = 9;
+            creep.memory.sta = 0;
+          } else {
+            if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+              creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+            }
+          }
+        } else {
+          creep.memory.dst = 9;
+          creep.memory.sta = 0;
+        }
+        break;
+
+        // state: s = 4
+        // return energy
+        case 4:
+          var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+          return (structure.structureType == STRUCTURE_CONTAINER) &&
+            _.sum(structure.store) < structure.storeCapacity;
+            console.log(_.sum(structure.store) < structure.storeCapacity);
+          }});
+          if (targets.length > 0){
+            creep.memory.dst = targets[0].id;
+            creep.memory.sta = 3;
+          } else {
+            creep.memory.sta = 0;
+          }
+          break;
     }
   }
-}
+
+
+} // var func
 module.exports = func;
