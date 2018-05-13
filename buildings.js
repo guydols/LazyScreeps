@@ -1,11 +1,11 @@
-var func = {
+var exp = {
 
 
   //**************
   // Execute the jobs for tower
   towerJobs: function(tower) {
     if(tower) {
-      if (tower.energy > 500){
+      if (tower.energy > 600){
         var targets = tower.room.find(FIND_STRUCTURES, {filter: function(structure) {
           if (structure.hits < structure.hitsMax &&
               structure.structureType != STRUCTURE_WALL &&
@@ -20,7 +20,7 @@ var func = {
           var targets = tower.room.find(FIND_STRUCTURES, {filter: function(structure) {
             if (structure.structureType == STRUCTURE_WALL ||
                 structure.structureType == STRUCTURE_RAMPART &&
-                structure.hits < 100000){return structure;}
+                structure.hits < 1000000){return structure;}
           }});
           targets.sort((x,y) => x.hits-y.hits);
           // console.log(JSON.stringify(targets));
@@ -50,4 +50,4 @@ var func = {
 
   }
 }
-module.exports = func;
+module.exports = exp;

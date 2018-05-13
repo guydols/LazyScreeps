@@ -1,4 +1,4 @@
-var func = {
+var exp = {
 
 
   //**************
@@ -20,6 +20,10 @@ var func = {
     // state: s == 0
     // request and gather energy
     case 0:
+      if(creep.carry.energy == creep.carryCapacity){
+        creep.memory.sta = 1;
+        break;
+      }
       var sources = creep.room.find(FIND_SOURCES);
       if (sources[0].energy != 0){
         if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
@@ -30,20 +34,23 @@ var func = {
           creep.moveTo(sources[1], {visualizePathStyle: {stroke: '#ffaa00'}});
         }
       }
-      if(creep.carry.energy == creep.carryCapacity){
-        creep.memory.sta = 1;
-      }
       break;
 
     // state: s == 1
     // store the energy carried by the creep
     case 1:
+      // check if carrying energy is empty
+      if (creep.carry.energy == 0) {
+        creep.memory.sta = 0;
+        break;
+      }
       // extension and spawns have 1st priority
       var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
       return (structure.structureType == STRUCTURE_EXTENSION ||
               structure.structureType == STRUCTURE_SPAWN) &&
               structure.energy < structure.energyCapacity;
       }});
+      // var targets = creep.pos.findClosestByRange(targets);
       if (targets.length == 0){
         // towers have 2nd priority
         var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
@@ -61,13 +68,16 @@ var func = {
       }
       // move to found target
       if(targets.length > 0) {
-        if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+        if (targets[0].structureType != STRUCTURE_TOWER){
+          var target =  creep.pos.findClosestByRange(targets);
+          if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+          }
+        } else {
+          if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+          }
         }
-      }
-      // check if carrying energy is empty
-      if (creep.carry.energy == 0) {
-        creep.memory.sta = 0;
       }
       break;
     }
@@ -104,8 +114,8 @@ var func = {
     }
     else {
       var sources = creep.room.find(FIND_SOURCES);
-      if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+      if(creep.harvest(sources[1]) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(sources[1], {visualizePathStyle: {stroke: '#ffaa00'}});
       }
     }
   },
@@ -207,7 +217,6 @@ var func = {
     // sta: state
     // src: source of x
     // dst: destination of x
-    creep.say(creep.memory.sta);
     switch(creep.memory.sta) {
 
       // state: s == 9
@@ -317,5 +326,5 @@ var func = {
   }
 
 
-} // var func
-module.exports = func;
+} // var exp
+module.exports = exp;

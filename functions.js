@@ -1,4 +1,42 @@
-var func = {
+var exp = {
+
+
+
+  //**************
+  // init
+  init: function() {
+    // global.ownedRooms = [];
+    // global.ownedSpawns = [];
+    // global.ownedCreeps = {};
+    // global.population = [4,1,1,0,0];
+    // global.creepTiers = [[WORK,CARRY,MOVE,MOVE],
+    //                   [WORK,WORK,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE]];
+
+    global.lazy = [];
+    for (let r in Game.rooms){
+      global.lazy.push({
+        'room':{
+          'vars':{
+            'roomname':r,
+            'epoch':0,
+            'alert':0,
+            'energylvl':0
+          },
+          'buildings':{
+            'spawns':[],
+            'towers':[]
+          },
+          'creeps':{
+              'harvesters' : 0,
+              'builders' : 0,
+              'upgraders' : 0,
+              'repairers' : 0,
+              'haulers' : 0
+          }
+        }
+      });
+    }
+  },
 
 
   //**************
@@ -15,29 +53,29 @@ var func = {
   //**************
   // spawn screeps in rooms where they are lacking
   spawning: function() {
-    var ownedRooms = [];
-    var ownedSpawns = [];
-    var ownedCreeps = {};
-    var population = [5,0,1,0,0];
-    var creepTiers = [[WORK,CARRY,MOVE,MOVE],
-                      [WORK,WORK,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE]];
+    global.ownedRooms = [];
+    global.ownedSpawns = [];
+    global.ownedCreeps = {};
+    global.population = [4,0,1,0,0];
+    global.creepTiers = [[WORK,CARRY,MOVE,MOVE],
+                      [WORK,WORK,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE]];
 
     // register owned rooms and spawns
     for(let room in Game.rooms) {
       var spawns = Game.rooms[room].find(FIND_MY_STRUCTURES,
         {filter: (s) => s.structureType == STRUCTURE_SPAWN});
     }
-    for (let x = 0; x < spawns.length; x++) {
-      ownedSpawns.push(spawns[x]);
-      if (!(ownedRooms.includes(spawns[x].room.name))) {
-        ownedRooms.push(spawns[x].room.name);
+    for (let spawn in spawns) {
+      global.ownedSpawns.push(spawns[spawn].id);
+      if (!(global.ownedRooms.includes(spawns[spawn].room.name))) {
+        global.ownedRooms.push(spawns[spawn].room.name);
       }
     }
 
     // register owned creeps assigned to each room
-    for (let room in ownedRooms) {
-      if (!(ownedRooms[room] in ownedCreeps)) {
-        ownedCreeps[ownedRooms[room]] = {
+    for (let room in global.ownedRooms) {
+      if (!(global.ownedRooms[room] in global.ownedCreeps)) {
+        global.ownedCreeps[global.ownedRooms[room]] = {
           'harvesters' : 0,
           'builders' : 0,
           'upgraders' : 0,
@@ -49,26 +87,26 @@ var func = {
       // count all the creeps per room
       for(let name in Game.creeps) {
         var creep = Game.creeps[name];
-        if (creep.memory.ori == ownedRooms[room]) {
+        if (creep.memory.ori == global.ownedRooms[room]) {
           if(creep.memory.rol == '0') {
-            ownedCreeps[ownedRooms[room]]['harvesters'] += 1;
+            global.ownedCreeps[global.ownedRooms[room]]['harvesters'] += 1;
           }
           if(creep.memory.rol == '1') {
-            ownedCreeps[ownedRooms[room]]['builders'] += 1;
+            global.ownedCreeps[global.ownedRooms[room]]['builders'] += 1;
           }
           if(creep.memory.rol == '2') {
-            ownedCreeps[ownedRooms[room]]['upgraders'] += 1;
+            global.ownedCreeps[global.ownedRooms[room]]['upgraders'] += 1;
           }
           if(creep.memory.rol == '3') {
-            ownedCreeps[ownedRooms[room]]['repairers'] += 1;
+            global.ownedCreeps[global.ownedRooms[room]]['repairers'] += 1;
           }
           if(creep.memory.rol == '4') {
-            ownedCreeps[ownedRooms[room]]['haulers'] += 1;
+            global.ownedCreeps[global.ownedRooms[room]]['haulers'] += 1;
           }
         }
       }
 
-      // console.log(JSON.stringify(ownedCreeps));
+
 
       // check if hauler is needed
 
@@ -76,28 +114,28 @@ var func = {
       // var sources = room.find(FIND_SOURCES);
       for (let spawn in spawns) {
         if (spawns[spawn].spawning == null){
-          for (let room in ownedCreeps) {
-            if (ownedCreeps[room]['harvesters'] < population[0]) {
+          for (let room in global.ownedCreeps) {
+            if (global.ownedCreeps[room]['harvesters'] < population[0]) {
               spawns[spawn].spawnCreep(creepTiers[1],
                 "Harvester" + Game.time.toString(),{memory: {rol:0,ori:room,sta:0,t:9},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
-            if (ownedCreeps[room]['builders'] <  population[1]) {
+            if (global.ownedCreeps[room]['builders'] <  population[1]) {
               spawns[spawn].spawnCreep(creepTiers[1],
                 "Builder" + Game.time.toString(),{memory: {rol:1,ori:room,sta:0,t:9},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
-            if (ownedCreeps[room]['upgraders'] <  population[2]) {
+            if (global.ownedCreeps[room]['upgraders'] <  population[2]) {
               spawns[spawn].spawnCreep(creepTiers[1],
                 "Upgrader" + Game.time.toString(),{memory: {rol:2,ori:room,sta:0,t:9},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
-            if (ownedCreeps[room]['repairers'] <  population[3]) {
+            if (global.ownedCreeps[room]['repairers'] <  population[3]) {
               spawns[spawn].spawnCreep(creepTiers[0],
                 "Repairer" + Game.time.toString(),{memory: {rol:3,ori:room,sta:0,t:9},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
             }
-            if (ownedCreeps[room]['haulers'] <  population[4]) {
+            if (global.ownedCreeps[room]['haulers'] <  population[4]) {
               spawns[spawn].spawnCreep([CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
                 "Haulers" + Game.time.toString(),{memory: {rol:4,ori:room,sta:0,src:9,dst:9},
                 directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
@@ -147,4 +185,4 @@ var func = {
 
 
 }
-module.exports = func;
+module.exports = exp;
