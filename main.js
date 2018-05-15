@@ -1,21 +1,19 @@
 "use strict";
 const roles = require('./roles');
-const functions = require('./functions');
+const func = require('./functions');
 const buildings = require('./buildings');
 
 module.exports.loop = function () {
 
-  functions.cleanup();
-  functions.init();
+  func.cleanup();
 
-  functions.spawning();
-  functions.execJobs(roles);
-  functions.towers(buildings);
+  func.init();
+
+  func.spawning();
+
+  func.execJobs(roles);
+
+  func.towers(buildings);
 
 
-  // console.log(" ");
-  // console.log(" ");
-  // for (let l in global.lazy) {
-  //   console.log(global.lazy[l].room.buildings.spawns);
-  // }
 };

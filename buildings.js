@@ -5,6 +5,11 @@ var exp = {
   // Execute the jobs for tower
   towerJobs: function(tower) {
     if(tower) {
+      var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+      if(closestHostile) {
+        tower.attack(closestHostile);
+        return;
+      }
       if (tower.energy > 600){
         var targets = tower.room.find(FIND_STRUCTURES, {filter: function(structure) {
           if (structure.hits < structure.hitsMax &&
@@ -17,7 +22,7 @@ var exp = {
             tower.repair(targets[0]);
           }
         } else {
-          var targets = tower.room.find(FIND_STRUCTURES, {filter: function(structure) {
+          targets = tower.room.find(FIND_STRUCTURES, {filter: function(structure) {
             if (structure.structureType == STRUCTURE_WALL &&
                 structure.hits < 1000000 ||
                 structure.structureType == STRUCTURE_RAMPART &&
@@ -29,10 +34,6 @@ var exp = {
             tower.repair(targets[0]);
           }
         }
-      }
-      var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-      if(closestHostile) {
-        tower.attack(closestHostile);
       }
     }
   },

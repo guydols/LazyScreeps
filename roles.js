@@ -53,7 +53,7 @@ var exp = {
       // var targets = creep.pos.findClosestByRange(targets);
       if (targets.length == 0){
         // towers have 2nd priority
-        var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
         return (structure.structureType == STRUCTURE_TOWER) &&
                 structure.energy < structure.energyCapacity;
         }});
@@ -61,7 +61,7 @@ var exp = {
       }
       if (targets.length == 0){
         // containers have 3nd priority
-        var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
         return (structure.structureType == STRUCTURE_STORAGE) &&
           _.sum(structure.store) < structure.storeCapacity;
         }});
