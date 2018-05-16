@@ -114,9 +114,6 @@ var exp = {
         global.lazy[l].room.creeps.builders[1] = 1;
       }
     }
-
-
-
   },
 
 
@@ -146,27 +143,27 @@ var exp = {
         let curSpawn = Game.getObjectById(curRoom.room.buildings.spawns[s]); 
         if (curCreeps.harvesters[0] < curCreeps.harvesters[1] && curSpawn.spawning == null){
           curSpawn.spawnCreep(global.creepTiers[1],
-            "Harvester" + Game.time.toString(),{memory: {rol:0,ori:curRoomname,sta:0,src:9,dst:9},
+            "Harvester" + Game.time.toString(),{memory: {rol:0,ori:curRoomname,sta:0,src:9,dst:9,ldr:9},
             directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
         }
         if (curCreeps.builders[0] < curCreeps.builders[1] && curSpawn.spawning == null){
           curSpawn.spawnCreep(global.creepTiers[1],
-            "Builder" + Game.time.toString(),{memory: {rol:1,ori:curRoomname,sta:0,src:9,dst:9},
+            "Builder" + Game.time.toString(),{memory: {rol:1,ori:curRoomname,sta:0,src:9,dst:9,ldr:9},
             directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
         }
         if (curCreeps.upgraders[0] < curCreeps.upgraders[1] && curSpawn.spawning == null){
           curSpawn.spawnCreep(global.creepTiers[1],
-            "Upgrader" + Game.time.toString(),{memory: {rol:2,ori:curRoomname,sta:0,src:9,dst:9},
+            "Upgrader" + Game.time.toString(),{memory: {rol:2,ori:curRoomname,sta:0,src:9,dst:9,ldr:9},
             directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
         }
         if (curCreeps.repairers[0] < curCreeps.repairers[1] && curSpawn.spawning == null){
           curSpawn.spawnCreep(global.creepTiers[0],
-            "Repairer" + Game.time.toString(),{memory: {rol:3,ori:curRoomname,sta:0,src:9,dst:9},
+            "Repairer" + Game.time.toString(),{memory: {rol:3,ori:curRoomname,sta:0,src:9,dst:9,ldr:9},
             directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
         }
         if (curCreeps.haulers[0] < curCreeps.haulers[1] && curSpawn.spawning == null){
           curSpawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            "Haulers" + Game.time.toString(),{memory: {rol:4,ori:curRoomname,sta:0,src:9,dst:9},
+            "Haulers" + Game.time.toString(),{memory: {rol:4,ori:curRoomname,sta:0,src:9,dst:9,ldr:9},
             directions:[BOTTOM_RIGHT,BOTTOM,BOTTOM_LEFT]});
         }
       }
@@ -210,7 +207,58 @@ var exp = {
         buildings.towerJobs(Game.getObjectById(global.lazy[l].room.buildings.towers[t]));
       }
     }
+  },
+
+
+
+
+  //**************
+  // get all towers and execute their jobs
+  reqEnergy: function(req) {
+
+    var keeper = null;
+    var ledger = null;
+    var sources = [];
+
+    for (let l in global.lazy){
+      // get spawn, keeper of the ledger
+      keeper = Game.getObjectById(global.lazy[l].buildings.spawns[0].memory.ledger);
+      // get existing ledger from keeper
+      ledger = keeper.memory.ledger;
+      // get all possible sources of energy
+      for (let s in global.lazy[l].room.buildings.storages){
+        sources.push([global.lazy[l].room.buildings.storages[s],
+        Game.getObjectById(global.lazy[l].room.buildings.storages[s]).store[RESOURCE_ENERGY]]);
+      }
+      for (let c in global.lazy[l].room.buildings.containers){
+        sources.push([global.lazy[l].room.buildings.containers[c],
+        Game.getObjectById(global.lazy[l].room.buildings.containers[c]).store[RESOURCE_ENERGY]]);
+      }
+      for (let e in global.lazy[l].room.resources.energy){
+        sources.push([global.lazy[l].room.resources.energy[e],
+        Game.getObjectById(global.lazy[l].room.buildings.containers[c]).amount]);
+      }
+    }
+    
+    var target = null;
+    // find viable source
+    for (let s in sources) {
+      // check if the source has requested energy
+      if (sources[s][1] >= req){
+        // select target
+        target = sources[s][0];
+        // get random id to keep track of ledger
+        let id = Math.random(Game.time);
+        // store new ledger in the keeper
+        ledger.push([id,target,(req*-1)]);
+        keeper.memory.ledger = ledger;
+        // return target and id to creep
+        return target,id;
+      }
+    }
   }
+
+
 
 
 };
