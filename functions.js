@@ -108,7 +108,7 @@ var exp = {
           }
         }
       }
-
+      // console.log(JSON.stringify(global.lazy));
       // check if builders are needed
       if(global.lazy[l].room.buildings.constructions.length > 0){
         global.lazy[l].room.creeps.builders[1] = 1;
@@ -175,23 +175,23 @@ var exp = {
 
   //**************
   // execute roles on creeps
-  execJobs: function(roles) {
+  execJobs: function() {
     for(let name in Game.creeps) {
       var creep = Game.creeps[name];
       if(creep.memory.rol == '0') {
-        roles.harvester(creep);
+        global.roles.harvester(creep);
       }
       if(creep.memory.rol == '1') {
-        roles.builder(creep);
+        global.roles.builder(creep);
       }
       if(creep.memory.rol == '2') {
-        roles.upgrader(creep);
+        global.roles.upgrader(creep);
       }
       if(creep.memory.rol == '3') {
-        roles.repairer(creep);
+        global.roles.repairer(creep);
       }
       if(creep.memory.rol == '4') {
-        roles.hauler(creep);
+        global.roles.hauler(creep);
       }
     }
   },
@@ -213,7 +213,7 @@ var exp = {
 
 
   //**************
-  // get all towers and execute their jobs
+  // request energy for creep from stored or source
   reqEnergy: function(req) {
 
     var keeper = null;
@@ -222,24 +222,39 @@ var exp = {
 
     for (let l in global.lazy){
       // get spawn, keeper of the ledger
-      keeper = Game.getObjectById(global.lazy[l].buildings.spawns[0].memory.ledger);
+      keeper = Game.getObjectById(global.lazy[l].room.buildings.spawns[0]);
       // get existing ledger from keeper
       ledger = keeper.memory.ledger;
       // get all possible sources of energy
-      for (let s in global.lazy[l].room.buildings.storages){
-        sources.push([global.lazy[l].room.buildings.storages[s],
-        Game.getObjectById(global.lazy[l].room.buildings.storages[s]).store[RESOURCE_ENERGY]]);
+      if (global.lazy[l].room.buildings.storages.length > 0){
+        for (let s in global.lazy[l].room.buildings.storages){
+          sources.push([global.lazy[l].room.buildings.storages[s],
+          Game.getObjectById(global.lazy[l].room.buildings.storages[s]).store[RESOURCE_ENERGY]]);
+        }
       }
-      for (let c in global.lazy[l].room.buildings.containers){
-        sources.push([global.lazy[l].room.buildings.containers[c],
-        Game.getObjectById(global.lazy[l].room.buildings.containers[c]).store[RESOURCE_ENERGY]]);
+      if (global.lazy[l].room.buildings.containers.length > 0){
+        for (let c in global.lazy[l].room.buildings.containers){
+          sources.push([global.lazy[l].room.buildings.containers[c],
+          Game.getObjectById(global.lazy[l].room.buildings.containers[c]).store[RESOURCE_ENERGY]]);
+        }
       }
-      for (let e in global.lazy[l].room.resources.energy){
-        sources.push([global.lazy[l].room.resources.energy[e],
-        Game.getObjectById(global.lazy[l].room.buildings.containers[c]).amount]);
+      if (global.lazy[l].room.resources.energy.length > 0){
+        for (let e in global.lazy[l].room.resources.energy){
+          sources.push([global.lazy[l].room.resources.energy[e],
+          Game.getObjectById(global.lazy[l].room.resources.energy[e]).energy]);
+          console.log(Game.getObjectById(global.lazy[l].room.resources.energy[e]));
+        }
       }
     }
-    
+    // check the ledger and apply changes to sources
+    for (let l in ledger) {
+      for (let s in sources) {
+        if (ledger[l][0] == sources[s][0]){
+          sources[s][1] -= ledger[l][2];
+        }
+      }
+    }
+
     var target = null;
     // find viable source
     for (let s in sources) {
@@ -253,12 +268,34 @@ var exp = {
         ledger.push([id,target,(req*-1)]);
         keeper.memory.ledger = ledger;
         // return target and id to creep
-        return target,id;
+        return [target,id];
+      }
+    }
+  },
+
+
+
+
+  //**************
+  // remove ledger where id = ledger[l][0]
+  rmLedger: function(id) {
+
+    var keeper = null;
+    var ledger = null;
+
+    for (let l in global.lazy){
+      // get spawn, keeper of the ledger
+      keeper = Game.getObjectById(global.lazy[l].room.buildings.spawns[0]);
+      // get existing ledger from keeper
+      ledger = keeper.memory.ledger;
+    }
+
+    for (let l in ledger) {
+      if (ledger[l][0] == id){
+        ledger.splice(l,1);
       }
     }
   }
-
-
 
 
 };

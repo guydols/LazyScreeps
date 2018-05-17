@@ -84,6 +84,8 @@ var exp = {
   },
 
 
+
+
   //**************
   // builder role
   builder: function(creep) {
@@ -95,28 +97,82 @@ var exp = {
     // s == 9 init new creep
     switch(creep.memory.sta) {
 
-    }
-    if(creep.memory.sta && creep.carry.energy == 0) {
-      creep.memory.sta = false;
-    }
+      // state: s == 9
+      // init new creep
+      case 9:
+        creep.memory.sta = 0;
+      break;
 
-    if(!creep.memory.sta && creep.carry.energy == creep.carryCapacity) {
-      creep.memory.sta = true;
-    }
-
-    if(creep.memory.sta) {
-      var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
-      if(targets.length) {
-        if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+      // state: s == 0
+      // request energy source
+      case 0:
+        if(creep.memory.ldr == 9){
+          let val = global.func.reqEnergy(creep.carryCapacity);
+          let target = val[0];
+          let id = val[1];
+          creep.memory.dst = target;
+          creep.memory.ldr = id;
+          creep.memory.sta = 1;
         }
-      }
-    }
-    else {
-      var sources = creep.room.find(FIND_SOURCES);
-      if(creep.harvest(sources[1]) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(sources[1], {visualizePathStyle: {stroke: '#ffaa00'}});
-      }
+      break;
+
+      // state: s == 1
+      // get energy form requested source
+      case 1:
+        if(creep.memory.ldr != 9){
+          var obj = Game.getObjectById(creep.memory.dst);
+          // console.log(JSON.stringify(obj));
+          if(obj instanceof Structure){
+            creep.memory.sta = 2;
+          }
+          if(obj instanceof Source){
+            creep.memory.sta = 3;
+          }
+        }
+      break;
+
+      // state: s == 2
+      // move to stored energy and take it
+      case 2:
+        var obj = Game.getObjectById(creep.memory.dst);
+        // console.log(creep.withdraw(obj));
+        if(creep.withdraw(obj,RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(obj, {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
+        if(creep.carryCapacity == creep.carry.energy){
+          creep.memory.sta = 4;
+          global.func.rmLedger(creep.memory.ldr);
+          creep.memory.ldr = 9;
+        }
+      break;
+
+      // state: s == 3
+      // harvest from energy source
+      case 3:
+        var obj = Game.getObjectById(creep.memory.dst);
+        if(creep.harvest(obj) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(obj, {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
+        if(creep.carryCapacity == creep.carry.energy){
+          creep.memory.sta = 4;
+          global.func.rmLedger(creep.memory.ldr);
+          creep.memory.ldr = 9;
+        }
+      break;
+
+      // state: s == 4
+      // build construction site
+      case 4:
+        var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+        if(targets.length) {
+          if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+          }
+        }
+        if(creep.carry.energy == 0){
+          creep.memory.sta = 0;
+        }
+      break;
     }
   },
 
@@ -223,20 +279,20 @@ var exp = {
       // init new creep
       case 9:
         creep.memory.sta = 0;
-        break;
+      break;
 
       // state: s == 0
       // search energy for deficiency
       case 0:
         // extensions and spawns have 1st priority
-        var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        let targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
         return (structure.structureType == STRUCTURE_EXTENSION ||
                 structure.structureType == STRUCTURE_SPAWN) &&
                 structure.energy < structure.energyCapacity;
         }});
         if (targets.length == 0){
           // towers have 2nd priority
-          var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+          let targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
           return (structure.structureType == STRUCTURE_TOWER) &&
                   structure.energy < (structure.energyCapacity-creep.carryCapacity);
           }});
@@ -257,12 +313,12 @@ var exp = {
             creep.memory.sta = 4;
           }
         }
-        break;
+      break;
 
       // state: s == 1
       // find buffer with energy
       case 1:
-        var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        let targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
         return (structure.structureType == STRUCTURE_CONTAINER) &&
           (structure.store[RESOURCE_ENERGY] >= 200);
         }});
@@ -272,7 +328,7 @@ var exp = {
         } else {
           creep.memory.sta = 0; // no energy in storage
         }
-        break;
+      break;
 
       // state: s == 2
       // get energy form buffer
@@ -285,13 +341,13 @@ var exp = {
           creep.memory.sta = 3;
           creep.memory.src = 9;
         }
-        break;
+      break;
 
       // state: s = 3
       // deliver energy to destination
       case 3:
         if (creep.carry.energy != 0){
-          var target = Game.getObjectById(creep.memory.dst);
+          let target = Game.getObjectById(creep.memory.dst);
 
           if (target.energy == target.energyCapacity){
             creep.memory.dst = 9;
@@ -305,23 +361,22 @@ var exp = {
           creep.memory.dst = 9;
           creep.memory.sta = 0;
         }
-        break;
+      break;
 
-        // state: s = 4
-        // return energy
-        case 4:
-          var targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
-          return (structure.structureType == STRUCTURE_CONTAINER) &&
-            _.sum(structure.store) < structure.storeCapacity;
-            console.log(_.sum(structure.store) < structure.storeCapacity);
-          }});
-          if (targets.length > 0){
-            creep.memory.dst = targets[0].id;
-            creep.memory.sta = 3;
-          } else {
-            creep.memory.sta = 0;
-          }
-          break;
+      // state: s = 4
+      // return energy
+      case 4:
+        let targets = creep.room.find(FIND_STRUCTURES, { filter: (structure) => {
+        return (structure.structureType == STRUCTURE_CONTAINER) &&
+          _.sum(structure.store) < structure.storeCapacity;
+        }});
+        if (targets.length > 0){
+          creep.memory.dst = targets[0].id;
+          creep.memory.sta = 3;
+        } else {
+          creep.memory.sta = 0;
+        }
+      break;
     }
   }
 

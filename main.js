@@ -1,19 +1,19 @@
 "use strict";
-const roles = require('./roles');
-const func = require('./functions');
-const buildings = require('./buildings');
+global.roles = require('./roles');
+global.func = require('./functions');
+global.buildings = require('./buildings');
 
 module.exports.loop = function () {
 
-  func.cleanup();
+  global.func.cleanup();
 
-  func.init();
+  global.func.init();
 
-  func.spawning();
+  global.func.spawning();
 
-  func.execJobs(roles);
+  global.func.execJobs();
 
-  func.towers(buildings);
+  global.func.towers(global.buildings);
 
 
 };
